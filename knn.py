@@ -123,14 +123,41 @@ class KNN:
         num_test = dists.shape[0]
         print("num_test is ", num_test)
         pred = np.zeros(num_test, np.bool)
-        arg_vec = np.argmin(dists, axis=1)
-        print("arg vec size is ", arg_vec.shape)
+        # arg_vec = np.argmin(dists, axis=1)
+        ##############################
+        sort_indexes = np.argsort(dists)
+        # print("sort indexes is ", sort_indexes)
+        # print("sort indexes size is ", sort_indexes.size)
+        k = self.k
+        train_y = self.train_y
+        print("k is ", k)
+
+        ############################
+        # print("arg vec size is ", arg_vec.shape)
         for i in range(num_test):
             # TODO: Implement choosing best class based on k
             # nearest training samples
+            zero_number = 0
+            nine_number = 0
+            i_indexes = sort_indexes[i]
+            for index in i_indexes:
+                flag = train_y[index]
+                # print("flag is ", flag)
+                if flag == True:
+                    zero_number += 1
+                else:
+                    nine_number += 1
 
-            pred[i] = self.train_y[arg_vec[i]]
-#             pass
+                if zero_number == k:
+                    pred[i] = True
+                    # print("zero_number ", zero_number)
+                    break
+
+                if nine_number == k:
+                    pred[i] = False
+                    # print("nine number ", nine_number)
+                    break
+
         return pred
 
     def predict_labels_multiclass(self, dists):
@@ -152,3 +179,7 @@ class KNN:
             # nearest training samples
             pass
         return pred
+
+    def kSmallestIndexes(self, dists):
+        k_small_indexes = np.argpartition(arr, k)[:k]
+        return k_small_indexes
