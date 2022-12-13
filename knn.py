@@ -174,10 +174,31 @@ class KNN:
         num_test = dists.shape[0]
         num_test = dists.shape[0]
         pred = np.zeros(num_test, np.int)
+
+        sort_indexes = np.argsort(dists)
+        k = self.k
+        train_y = self.train_y
+        print("k is ", k)
+        print("sort indexes is ", sort_indexes.shape)
+
         for i in range(num_test):
             # TODO: Implement choosing best class based on k
             # nearest training samples
-            pass
+
+            histogram = np.zeros(10)
+            # print("histogram is ", histogram)
+            i_indexes = sort_indexes[i]
+            for index in i_indexes:
+                # print("index shape is", index)
+                value = train_y[index]
+                # print("value is ", value)
+                # print("value shape is", value.shape)
+
+                histogram[value] += 1
+                if histogram[value] == k:
+                    pred[i] = value
+                    break
+            # pass
         return pred
 
     def kSmallestIndexes(self, dists):
