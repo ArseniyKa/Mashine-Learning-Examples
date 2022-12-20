@@ -49,9 +49,27 @@ def cross_entropy_loss(probs, target_index):
     Returns:
       loss: single value
     '''
-    # p_x = np.zeros_like(probs)
-    # p_x[target_index] = 1
-    loss = - np.log(probs[target_index])
+
+    # target_arr = np.asarray(target_index, dtype=int)
+    # target_arr = target_arr.reshape(1, -1)
+    # dimens = target_arr.ndim
+    orig_probs = probs.copy()
+    orig_probs = orig_probs.reshape(-1)
+    loss_arr = np.zeros_like(probs.shape)
+    dimens = probs.ndim
+    print("targ ind is ", target_index)
+    print(target_index.size)
+    length = target_index.size
+    print("probs ", probs.shape)
+    if (length == 1):
+        loss = - np.log(orig_probs[target_index])
+    else:
+        for ls, pr, ind in zip(loss_arr, probs, target_index):
+            ls = - np.log(pr[ind])
+        loss = np.average(ls)
+
+    # target_arr = probs[target_index]
+    # loss = - np.log(probs[target_index])
     print("loss is ", loss)
     return loss
 
@@ -77,12 +95,27 @@ def softmax_with_cross_entropy(predictions, target_index):
 
     '''
     probs = softmax(predictions)
-    loss = cross_entropy_loss(probs, 1)
+    loss = cross_entropy_loss(probs, target_index)
     # print("probs are ", probs)
     # print("loss is ", loss)
     # grad = np.zeros_like(probs.shape)
-    grad = probs
-    grad[target_index] -= 1
+    orig_probs = probs.copy()
+    dimens = 1
+    grad = probs.copy()
+    print("target index", target_index)
+    print(target_index.size)
+    length = target_index.size
+    if (length == 1):
+        old_shape = grad.shape
+        grad = grad.reshape(-1)
+        grad[target_index] -= 1
+        grad = grad.reshape(old_shape)
+    else:
+        for index in target_index:
+            grad[index] -= 1
+
+    # grad = orig_probs
+    # grad[target_index] -= 1
     # grad[target_index] = -1/probs[target_index]
     print("grad is ", grad)
     return loss, grad

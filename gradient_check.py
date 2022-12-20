@@ -33,6 +33,8 @@ def check_gradient(f, x, delta=1e-5, tol=1e-4):
 
     orig_x = x.copy()
     fx, analytic_grad = f(x)
+    print("analytic grad is \n", analytic_grad)
+    print("x is \n", x)
     assert np.all(np.isclose(orig_x, x, tol)
                   ), "Functions shouldn't modify input variables"
 
@@ -51,20 +53,20 @@ def check_gradient(f, x, delta=1e-5, tol=1e-4):
         # print("it is ", it)
 
         analytic_grad_at_ix = analytic_grad[ix]
-        print("analytic_grad_at_ix ", analytic_grad_at_ix)
-        print("it value is ", it.value)
-        print("ix ", ix)
+        # print("analytic_grad_at_ix ", analytic_grad_at_ix)
+        # print("it value is ", it.value)
+        # print("ix ", ix)
         val = it.value
         zero_arr = np.zeros(x.shape)
         zero_arr[ix] = delta
-        print("zero arr is ", zero_arr)
+        # print("zero arr is ", zero_arr)
         func2, _ = f(orig_x + zero_arr)
         func1, _ = f(orig_x - zero_arr)
-        print("func1 is ", func1)
-        print("func2 is ", func2)
+        # print("func1 is ", func1)
+        # print("func2 is ", func2)
         numeric_grad[ix] = (func2 - func1) / (2*delta)
         numeric_grad_at_ix = numeric_grad[ix]
-        print("numeric_grad_at_ix ", numeric_grad_at_ix)
+        # print("numeric_grad_at_ix ", numeric_grad_at_ix)
 
         # TODO compute value of numeric gradient of f to idx
         if not np.isclose(numeric_grad_at_ix, analytic_grad_at_ix, tol):
