@@ -14,9 +14,20 @@ def softmax(predictions):
         probability for every class, 0..1
     '''
     orig_predictions = predictions.copy()
-    orig_predictions -= np.max(orig_predictions)
+    print("orig predictions ", orig_predictions)
+    dimens = predictions.ndim
+    if (dimens == 1):
+        max_pred = orig_predictions.max()
+        orig_predictions -= max_pred
+    else:
+        max_pred = orig_predictions.max(axis=1)
+        print("max pred is ", max_pred)
+        for elem, max_elem in zip(orig_predictions, max_pred):
+            elem -= max_elem
+
+    # orig_predictions -= np.max(orig_predictions, axis=dimens - 1)
     # probabilities = np.zeros_like(predictions)
-    sum_exps = np.sum(np.exp(orig_predictions))
+    sum_exps = np.sum(np.exp(orig_predictions),  axis=dimens - 1)
     probabilities = np.exp(orig_predictions)/sum_exps
     print("probabilites are ", probabilities)
     return probabilities

@@ -29,7 +29,7 @@ def check_gradient(f, x, delta=1e-5, tol=1e-4):
     # return checking
 
     assert isinstance(x, np.ndarray)
-    assert x.dtype == np.float
+    assert x.dtype == float
 
     orig_x = x.copy()
     fx, analytic_grad = f(x)
