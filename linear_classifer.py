@@ -14,22 +14,40 @@ def softmax(predictions):
         probability for every class, 0..1
     '''
     orig_predictions = predictions.copy()
-    print("orig predictions ", orig_predictions)
+    # print("orig predictions \n", orig_predictions)
+    batch_size = predictions.shape[0]
     dimens = predictions.ndim
-    if (dimens == 1):
+
+    # print("batch_size is ", batch_size)
+    # print("dimension is ", dimens)
+    # print("shape 1 is ", predictions.shape[1])
+    if (batch_size == 1 or dimens == 1):
         max_pred = orig_predictions.max()
         orig_predictions -= max_pred
+        sum_exps = np.sum(np.exp(orig_predictions))
+        probabilities = np.exp(orig_predictions)/sum_exps
     else:
         max_pred = orig_predictions.max(axis=1)
-        print("max pred is ", max_pred)
+        # print("max pred is \n", max_pred)
         for elem, max_elem in zip(orig_predictions, max_pred):
             elem -= max_elem
+        sum_exps = np.sum(np.exp(orig_predictions),  axis=1)
+        # print("sum exps are \n", sum_exps)
+        # print("pred shape is ", predictions.shape)
+        probabilities = np.zeros(predictions.shape)
+        # print("probabilites old \n", probabilities)
+        # ind = 0
+        for ind, sums in zip(range(orig_predictions.size), sum_exps):
+            probabilities[ind] = np.exp(orig_predictions[ind])/sums
+            # ind += 1
+
+        # probabilities = np.exp(orig_predictions)/sum_exps
 
     # orig_predictions -= np.max(orig_predictions, axis=dimens - 1)
     # probabilities = np.zeros_like(predictions)
-    sum_exps = np.sum(np.exp(orig_predictions),  axis=dimens - 1)
-    probabilities = np.exp(orig_predictions)/sum_exps
-    print("probabilites are ", probabilities)
+    # sum_exps = np.sum(np.exp(orig_predictions),  axis=dimens - 1)
+    # probabilities = np.exp(orig_predictions)/sum_exps
+    # print("probabilites are \n", probabilities)
     return probabilities
     # TODO implement softmax
     # Your final implementation shouldn't have any loops
@@ -55,18 +73,20 @@ def cross_entropy_loss(probs, target_index):
     # dimens = target_arr.ndim
     orig_probs = probs.copy()
     orig_probs = orig_probs.reshape(-1)
-    loss_arr = np.zeros_like(probs.shape)
+    loss_arr = np.zeros(probs.shape[0])
     dimens = probs.ndim
-    print("targ ind is ", target_index)
-    print(target_index.size)
+    # print("targ ind is ", target_index)
+    # print(target_index.size)
     length = target_index.size
-    print("probs ", probs.shape)
+    # print("probs ", probs.shape)
     if (length == 1):
         loss = - np.log(orig_probs[target_index])
     else:
-        for ls, pr, ind in zip(loss_arr, probs, target_index):
-            ls = - np.log(pr[ind])
-        loss = np.average(ls)
+        for i, pr, ind in zip(range(loss_arr.size),  probs, target_index):
+            # print("probs are \n", pr[ind])
+            loss_arr[i] = - np.log(pr[ind])
+        print("loss array \n", loss_arr)
+        loss = np.average(loss_arr)
 
     # target_arr = probs[target_index]
     # loss = - np.log(probs[target_index])
@@ -102,22 +122,24 @@ def softmax_with_cross_entropy(predictions, target_index):
     orig_probs = probs.copy()
     dimens = 1
     grad = probs.copy()
-    print("target index", target_index)
-    print(target_index.size)
+    # print("target index\n", target_index)
+    # print(target_index.size)
     length = target_index.size
+    # print("old grad is \n", grad)
     if (length == 1):
         old_shape = grad.shape
         grad = grad.reshape(-1)
         grad[target_index] -= 1
         grad = grad.reshape(old_shape)
     else:
-        for index in target_index:
-            grad[index] -= 1
+        for elem, index in zip(grad, target_index):
+            # print("index is ", index)
+            elem[index] -= 1
 
     # grad = orig_probs
     # grad[target_index] -= 1
     # grad[target_index] = -1/probs[target_index]
-    print("grad is ", grad)
+    # print("grad is \n", grad)
     return loss, grad
 
     # TODO implement softmax with cross-entropy
