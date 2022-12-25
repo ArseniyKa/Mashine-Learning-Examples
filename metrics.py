@@ -87,5 +87,12 @@ def multiclass_accuracy(prediction, ground_truth):
     Returns:
     accuracy - ratio of accurate predictions to total samples
     '''
-    # TODO: Implement computing accuracy
-    return 0
+    coinsence_count = 0
+    size = prediction.size
+    for i in range(size):
+        if prediction[i] == ground_truth[i]:
+            coinsence_count += 1
+
+    return coinsence_count/size
+    # # TODO: Implement computing accuracy
+    # return 0
