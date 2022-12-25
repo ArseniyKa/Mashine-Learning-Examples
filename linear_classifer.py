@@ -18,23 +18,17 @@ def softmax(predictions):
     orig_predictions = predictions.copy()
     # print("orig predictions \n", orig_predictions)
 
-    max_pred = orig_predictions.max(axis=1)
-    max_pred = max_pred[:, np.newaxis]
+    dim = orig_predictions.ndim - 1
+    max_pred = orig_predictions.max(axis=dim)
+    max_pred = max_pred[:, np.newaxis] if dim > 0 else max_pred
     # print("max pred is \n", max_pred)
     orig_predictions -= max_pred
-    sum_exps = np.sum(np.exp(orig_predictions),  axis=1)
-    # print("sum exps are \n", sum_exps)
-    # print("pred shape is ", predictions.shape)
-    probabilities = np.zeros(predictions.shape)
-    # print("probabilites old \n", probabilities)
-    for ind, sums in zip(range(orig_predictions.size), sum_exps):
-        probabilities[ind] = np.exp(orig_predictions[ind])/sums
+    sum_exps = np.sum(np.exp(orig_predictions),  axis=dim)
+    sum_exps = sum_exps[:, np.newaxis] if dim > 0 else sum_exps
+    probabilities = np.exp(orig_predictions)/sum_exps
 
     # print("probabilites are \n", probabilities)
     return probabilities
-    # TODO implement softmax
-    # Your final implementation shouldn't have any loops
-    raise Exception("Not implemented!")
 
 
 def cross_entropy_loss(probs, target_index):
@@ -51,14 +45,15 @@ def cross_entropy_loss(probs, target_index):
       loss: single value
     '''
     orig_probs = probs.copy()
-    orig_probs = orig_probs.reshape(-1)
-    loss_arr = np.zeros(probs.shape[0])
-    # print("probs ", probs.shape)
-
-    for i, pr, ind in zip(range(loss_arr.size),  probs, target_index):
-        # print("probs are \n", pr[ind])
-        loss_arr[i] = - np.log(pr[ind])
-    # print("loss array \n", loss_arr)
+    target_index = target_index.reshape(-1)
+    # print("orig_probs \n", orig_probs)
+    # print("target index is\n", target_index)
+    dims = orig_probs.ndim
+    target_probs = orig_probs[range(
+        len(orig_probs)), target_index] if dims > 1 else orig_probs[target_index]
+    # print("target arr is \n", target_probs)
+    loss_arr = - np.log(target_probs)
+    print("loss array \n", loss_arr)
     loss = np.average(loss_arr)
 
     # print("loss is ", loss)
@@ -87,11 +82,21 @@ def softmax_with_cross_entropy(predictions, target_index):
     # print("loss is ", loss)
     orig_probs = probs.copy()
     grad = probs.copy()
-    # print("target index\n", target_index)
+    dim = grad.ndim - 1
 
-    for elem, index in zip(grad, target_index):
-        # print("index is ", index)
-        elem[index] -= 1
+    target_index = target_index.reshape(-1)
+    # target_index = target_index[:, np.newaxis] if dim > 0 else target_index
+    # print("before grad \n", grad)
+    # print("target index\n", target_index)
+    # grad[target_index] -= 1
+    if dim > 0:
+        grad[range(len(grad)), target_index] -= 1
+    else:
+        grad[target_index] -= 1
+
+    # for elem, index in zip(grad, target_index):
+    #     # print("index is ", index)
+    #     elem[index] -= 1
 
     # print("grad is \n", grad)
     return loss, grad
