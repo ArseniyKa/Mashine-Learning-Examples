@@ -48,12 +48,16 @@ def cross_entropy_loss(probs, target_index):
     target_index = target_index.reshape(-1)
     # print("orig_probs \n", orig_probs)
     # print("target index is\n", target_index)
-    dims = orig_probs.ndim
-    target_probs = orig_probs[range(
-        len(orig_probs)), target_index] if dims > 1 else orig_probs[target_index]
-    loss_arr = - np.log(target_probs)
+    dim = orig_probs.ndim - 1
+    if dim > 0:
+        target_probability = orig_probs[range(
+            len(orig_probs)), target_index]
+    else:
+        target_probability = orig_probs[target_index]
+
+    loss_arr = - np.log(target_probability)
     # print("loss array \n", loss_arr)
-    loss = np.sum(loss_arr)
+    loss = np.average(loss_arr)
 
     # print("loss is ", loss)
     return loss
@@ -85,6 +89,7 @@ def softmax_with_cross_entropy(predictions, target_index):
 
     target_index = target_index.reshape(-1)
     # print("target index\n", target_index)
+    # первая производная по вероятностям
     if dim > 0:
         grad[range(len(grad)), target_index] -= 1
     else:
@@ -135,24 +140,9 @@ def linear_softmax(X, W, target_index):
     predictions = np.dot(X, W)
     loss, grad = softmax_with_cross_entropy(
         predictions, target_index)
-
     batch_size = target_index.size
-    # print("grad is \n", grad)
-
-    # batch_dW = np.zeros((batch_size, W.shape[0], W.shape[1]))
-    # dW_ind = np.zeros(W.shape)
-    # for k in range(batch_size):
-    #     for i in range(W.shape[0]):
-    #         for j in range(W.shape[1]):
-    #             dW_ind[i][j] = X[k][i] * grad[k][j]
-
-    # batch_dW[k] = dW_ind
-
-    dW = np.dot(X.T, grad)
-
-    # print("batch dW is\n ", batch_dW)
-    # dW = np.average(batch_dW, axis=0)
-    # print("dW is \n", dW)
+    # вторая производная
+    dW = np.dot(X.T, grad)/batch_size
 
     # # TODO implement prediction and gradient over W
     # # Your final implementation shouldn't have any loops
@@ -215,17 +205,13 @@ class LinearSoftmaxClassifier():
             test_accuracy = multiclass_accuracy(test_pred, y)*100
             print('Linear softmax classifier test set accuracy: %f' %
                   (test_accuracy, ))
+            print("Epoch %i, loss: %f" % (epoch, loss))
 
             # TODO implement generating batches from indices
             # Compute loss and gradients
             # Apply gradient to weights using learning rate
             # Don't forget to add both cross-entropy loss
             # and regularization!
-            # raise Exception("Not implemented!")
-
-            # end
-            # print("Epoch %i, loss: %f" % (epoch, loss))
-
         return loss_history
 
     def predict(self, X):
