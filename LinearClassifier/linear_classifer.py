@@ -194,9 +194,9 @@ class LinearSoftmaxClassifier():
             for i in range(len(batches_indices)):
                 batch_X = X[batches_indices[i]]
                 batch_y = y[batches_indices[i]]
-                loss, dW = linear_softmax(batch_X, self.W, batch_y)
-                reg_loss, reg_dW = l2_regularization(self.W, reg)
-                self.W -= learning_rate * (dW + reg_dW)
+                loss, dW = linear_softmax(batch_X, W, batch_y)
+                reg_loss, reg_dW = l2_regularization(W, reg)
+                W -= learning_rate * (dW + reg_dW)
                 loss_history = np.append(loss_history, loss)
                 # if(i % 500 == 0):
                 # print("Epoch %i, loss: %f" % (epoch, loss))
