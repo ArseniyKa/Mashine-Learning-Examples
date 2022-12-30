@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def numericDerivative(f, x, delta=1e-5):
     # We will go through every dimension of x and compute numeric
     # derivative for it
@@ -36,7 +37,7 @@ def check_gradient(f, x, delta=1e-5, tol=1e-4):
     '''
 
     print("CHECK GRADIENT")
-    print("predictions is \n", x)
+    print("x is \n", x)
 
     assert isinstance(x, np.ndarray)
     assert x.dtype == float
@@ -69,6 +70,7 @@ def check_gradient(f, x, delta=1e-5, tol=1e-4):
 
     print("Gradient check passed!")
     return True
+
 
 def check_layer_gradient(layer, x, delta=1e-5, tol=1e-4):
     """
