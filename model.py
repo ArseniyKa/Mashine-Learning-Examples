@@ -1,6 +1,6 @@
 import numpy as np
 
-from layers import FullyConnectedLayer, ReLULayer, softmax_with_cross_entropy, l2_regularization
+from layers import FullyConnectedLayer, ReLULayer, softmax_with_cross_entropy, l2_regularization, softmax
 
 
 class TwoLayerNet:
@@ -16,9 +16,11 @@ class TwoLayerNet:
         hidden_layer_size, int - number of neurons in the hidden layer
         reg, float - L2 regularization strength
         """
+        self.layer1 = FullyConnectedLayer(n_input, hidden_layer_size)
+        self.layer2 = FullyConnectedLayer(hidden_layer_size, n_output)
         self.reg = reg
         # TODO Create necessary layers
-        raise Exception("Not implemented!")
+        # raise Exception("Not implemented!")
 
     def compute_loss_and_gradients(self, X, y):
         """
@@ -29,6 +31,26 @@ class TwoLayerNet:
         X, np array (batch_size, input_features) - input data
         y, np array of int (batch_size) - classes
         """
+        self.params()
+        relu1 = self.layer1.forward(X)
+        relu2 = self.layer2.forward(relu1)
+        loss, grad = softmax_with_cross_entropy(relu2, y)
+        reg_loss1, reg_dW1, reg_dB1 = l2_regularization(
+            self.layer1.W.value, self.layer1.B.value, self.reg)
+        reg_loss2, reg_dW2, reg_dB2 = l2_regularization(
+            self.layer2.W.value, self.layer2.B.value, self.reg)
+        d_input2 = self.layer2.backward(grad)
+        d_input1 = self.layer1.backward(d_input2)
+
+        self.layer1.W.grad += reg_dW1
+        self.layer2.W.grad += reg_dW2
+
+        self.layer1.B.grad += reg_dB1
+        self.layer2.B.grad += reg_dB2
+
+        loss += reg_loss1 + reg_loss2
+        return loss
+
         # Before running forward and backward pass through the model,
         # clear parameter gradients aggregated from the previous pass
         # TODO Set parameter gradient to zeros
@@ -54,17 +76,34 @@ class TwoLayerNet:
         Returns:
           y_pred, np.array of int (test_samples)
         """
+
+        relu1 = self.layer1.forward(X)
+        relu2 = self.layer2.forward(relu1)
+        pred = softmax(relu2)
+        pred = np.argmax(pred, axis=1)
+        print("prediction shape is \n", pred.shape)
+        assert pred.size == X.shape[0]
+        return pred
+
         # TODO: Implement predict
         # Hint: some of the code of the compute_loss_and_gradients
         # can be reused
-        pred = np.zeros(X.shape[0], np.int)
+        # pred = np.zeros(X.shape[0], np.int)
 
-        raise Exception("Not implemented!")
-        return pred
+        # raise Exception("Not implemented!")
 
     def params(self):
-        result = {}
+        mapa1 = self.layer1.params()
+        mapa1['W'].grad = np.zeros(self.layer1.W.value.shape)
+        mapa1['B'].grad = np.zeros(self.layer1.B.value.shape)
 
+        mapa2 = self.layer2.params()
+        mapa2['W'].grad = np.zeros(self.layer2.W.value.shape)
+        mapa2['B'].grad = np.zeros(self.layer2.B.value.shape)
+
+        result = {'W1': self.layer1.W, 'B1': self.layer1.B,
+                  'W2': self.layer2.W, 'B2': self.layer2.B}
+        return result
         # TODO Implement aggregating all of the params
 
         raise Exception("Not implemented!")

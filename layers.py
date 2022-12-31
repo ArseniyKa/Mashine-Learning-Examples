@@ -55,7 +55,8 @@ def cross_entropy_loss(probs, target_index):
 
     loss_arr = - np.log(target_probability)
     # print("loss array \n", loss_arr)
-    loss = np.average(loss_arr)
+    # loss = np.average(loss_arr)
+    loss = np.sum(loss_arr)
 
     # print("loss is ", loss)
     return loss
@@ -118,7 +119,8 @@ def linear_softmax(X, W, target_index):
         predictions, target_index)
     batch_size = target_index.size
     # вторая производная
-    dW = np.dot(X.T, grad)/batch_size
+    # dW = np.dot(X.T, grad)/batch_size
+    dW = np.dot(X.T, grad)
 
     # # TODO implement prediction and gradient over W
     # # Your final implementation shouldn't have any loops
@@ -127,7 +129,7 @@ def linear_softmax(X, W, target_index):
     return loss, dW
 
 
-def l2_regularization(W, reg_strength):
+def l2_regularization(W, B, reg_strength):
     '''
     Computes L2 regularization loss on weights and its gradient
 
@@ -140,13 +142,15 @@ def l2_regularization(W, reg_strength):
       gradient, np.array same shape as W - gradient of weight by l2 loss
     '''
     W_2 = W*W
-    loss = reg_strength * np.sum(W_2)
-    grad = 2*reg_strength * W
+    B_2 = B*B
+    loss = reg_strength * (np.sum(W_2) + np.sum(B_2))
+    dW = 2*reg_strength * W
+    dB = 2*reg_strength * B
     # TODO: implement l2 regularization and gradient
     # Your final implementation shouldn't have any loops
     # raise Exception("Not implemented!")
 
-    return loss, grad
+    return loss, dW, dB
 
 
 class Param:
@@ -240,9 +244,9 @@ class FullyConnectedLayer:
         self.B.grad = np.dot(ones_arr.T, drelu)
         # print("X is\n", self.X)
         # print("B grad is\n", self.B.grad)
-        d_result = np.dot(drelu, self.W.value.T)
+        d_input = np.dot(drelu, self.W.value.T)
         # print("dresult is \n", d_result)
-        return d_result
+        return d_input
 
         # TODO: Implement backward pass
         # Compute both gradient with respect to input
@@ -253,8 +257,6 @@ class FullyConnectedLayer:
         # the previous assignment
 
         raise Exception("Not implemented!")
-
-        return d_input
 
     def params(self):
         return {'W': self.W, 'B': self.B}
