@@ -55,8 +55,8 @@ def cross_entropy_loss(probs, target_index):
 
     loss_arr = - np.log(target_probability)
     # print("loss array \n", loss_arr)
-    # loss = np.average(loss_arr)
     loss = np.sum(loss_arr)
+    # loss = np.sum(loss_arr)
 
     # print("loss is ", loss)
     return loss
@@ -98,35 +98,6 @@ def softmax_with_cross_entropy(predictions, target_index):
     return loss, grad
 
 
-def linear_softmax(X, W, target_index):
-    '''
-    Performs linear classification and returns loss and gradient over W
-
-    Arguments:
-      X, np array, shape (num_batch, num_features) - batch of images
-      W, np array, shape (num_features, classes) - weights
-      target_index, np array, shape (num_batch) - index of target classes
-
-    Returns:
-      loss, single value - cross-entropy loss
-      gradient, np.array same shape as W - gradient of weight by loss
-
-    '''
-    # print("X is \n ", X)
-    # print("W is \n ", W)
-    predictions = np.dot(X, W)
-    loss, grad = softmax_with_cross_entropy(
-        predictions, target_index)
-    batch_size = target_index.size
-    # вторая производная
-    # dW = np.dot(X.T, grad)/batch_size
-    dW = np.dot(X.T, grad)
-
-    # # TODO implement prediction and gradient over W
-    # # Your final implementation shouldn't have any loops
-    # raise Exception("Not implemented!")
-
-    return loss, dW
 
 
 def l2_regularization(W, B, reg_strength):
@@ -207,19 +178,13 @@ class FullyConnectedLayer:
     def __init__(self, n_input, n_output):
         self.W = Param(0.001 * np.random.randn(n_input, n_output))
         self.B = Param(0.001 * np.random.randn(1, n_output))
-        self.Relu = ReLULayer()
 
     def forward(self, X):
         # TODO: Implement forward pass
         # Your final implementation shouldn't have any loops
         self.X = X
         Z = np.dot(self.X, self.W.value) + self.B.value
-        relu = self.Relu.forward(Z)
-        return relu
-
-        # loss, dW = linear_softmax(batch_X, self.W, self.B, batch_y)
-
-        # raise Exception("Not implemented!")
+        return Z
 
     def backward(self, d_out):
         """
@@ -236,15 +201,14 @@ class FullyConnectedLayer:
           with respect to input
         """
         batch_size = d_out.shape[0]
-        drelu = self.Relu.backward(d_out)
         # print("drelu is \n", drelu)
 
-        self.W.grad = np.dot(self.X.T, drelu)
-        ones_arr = np.ones((batch_size, self.B.value.shape[0]))
-        self.B.grad = np.dot(ones_arr.T, drelu)
+        self.W.grad = np.dot(self.X.T, d_out)
+        ones_arr = np.ones((batch_size, self.B.value.shape[0])).astype(float)
+        self.B.grad = np.dot(ones_arr.T, d_out)
         # print("X is\n", self.X)
         # print("B grad is\n", self.B.grad)
-        d_input = np.dot(drelu, self.W.value.T)
+        d_input = np.dot(d_out, self.W.value.T)
         # print("dresult is \n", d_result)
         return d_input
 

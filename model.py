@@ -31,17 +31,27 @@ class TwoLayerNet:
         X, np array (batch_size, input_features) - input data
         y, np array of int (batch_size) - classes
         """
-        self.params()
-        relu1 = self.layer1.forward(X)
-        relu2 = self.layer2.forward(relu1)
-        loss, grad = softmax_with_cross_entropy(relu2, y)
+        # self.params()
+        Relu = ReLULayer()
+
+        self.layer1.W.grad = np.zeros_like(self.layer1.W.value)
+        self.layer1.B.grad = np.zeros_like(self.layer1.B.value)
+
+        self.layer2.W.grad = np.zeros_like(self.layer2.W.value)
+        self.layer2.B.grad = np.zeros_like(self.layer2.B.value)
+
+        Z1 = self.layer1.forward(X)
+        relu = Relu.forward(Z1)
+        Z2 = self.layer2.forward(relu)
+        loss, grad = softmax_with_cross_entropy(Z2, y)
+        d_input2 = self.layer2.backward(grad)
+        drelu = Relu.backward(d_input2)
+        d_input1 = self.layer1.backward(drelu)
+
         reg_loss1, reg_dW1, reg_dB1 = l2_regularization(
             self.layer1.W.value, self.layer1.B.value, self.reg)
         reg_loss2, reg_dW2, reg_dB2 = l2_regularization(
             self.layer2.W.value, self.layer2.B.value, self.reg)
-        d_input2 = self.layer2.backward(grad)
-        d_input1 = self.layer1.backward(d_input2)
-
         self.layer1.W.grad += reg_dW1
         self.layer2.W.grad += reg_dW2
 
@@ -76,12 +86,13 @@ class TwoLayerNet:
         Returns:
           y_pred, np.array of int (test_samples)
         """
-
-        relu1 = self.layer1.forward(X)
-        relu2 = self.layer2.forward(relu1)
-        pred = softmax(relu2)
+        Relu = ReLULayer()
+        Z1 = self.layer1.forward(X)
+        relu = Relu.forward(Z1)
+        Z2 = self.layer2.forward(relu)
+        pred = softmax(Z2)
         pred = np.argmax(pred, axis=1)
-        print("prediction shape is \n", pred.shape)
+        # print("prediction shape is \n", pred.shape)
         assert pred.size == X.shape[0]
         return pred
 
@@ -93,13 +104,6 @@ class TwoLayerNet:
         # raise Exception("Not implemented!")
 
     def params(self):
-        mapa1 = self.layer1.params()
-        mapa1['W'].grad = np.zeros(self.layer1.W.value.shape)
-        mapa1['B'].grad = np.zeros(self.layer1.B.value.shape)
-
-        mapa2 = self.layer2.params()
-        mapa2['W'].grad = np.zeros(self.layer2.W.value.shape)
-        mapa2['B'].grad = np.zeros(self.layer2.B.value.shape)
 
         result = {'W1': self.layer1.W, 'B1': self.layer1.B,
                   'W2': self.layer2.W, 'B2': self.layer2.B}

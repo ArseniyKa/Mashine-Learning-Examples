@@ -72,6 +72,7 @@ class Trainer:
             pred_batch = self.model.predict(batch_X)
             pred[batch_indices] = pred_batch
 
+        # print("pred is\n", pred)
         return multiclass_accuracy(pred, y)
 
     def fit(self):
@@ -87,11 +88,19 @@ class Trainer:
         train_acc_history = []
         val_acc_history = []
 
+        X = self.dataset.train_X
+        y = self.dataset.train_y
+
+        print("X shape is\n", X.shape)
+        print("y shape is\n", y.shape)
+
         for epoch in range(self.num_epochs):
             shuffled_indices = np.arange(num_train)
             np.random.shuffle(shuffled_indices)
             sections = np.arange(self.batch_size, num_train, self.batch_size)
+            # print("sections shape is\n",sections.shape)
             batches_indices = np.array_split(shuffled_indices, sections)
+            # print("batches indeces is\n", len(batches_indices))
 
             batch_losses = []
 
@@ -99,30 +108,39 @@ class Trainer:
                 # TODO Generate batches based on batch_indices and
                 # use model to generate loss and gradients for all
                 # the params
-
-                raise Exception("Not implemented!")
-
-                for param_name, param in self.model.params().items():
-                    optimizer = self.optimizers[param_name]
-                    param.value = optimizer.update(
-                        param.value, param.grad, self.learning_rate)
-
+                # print("batch indices\n", batch_indices)
+                batch_X = X[batch_indices]
+                batch_y = y[batch_indices]
+                loss = self.model.compute_loss_and_gradients(
+                    batch_X, batch_y)
+                params = self.model.params()
+                self.model.layer1.W.value -= self.learning_rate * self.model.layer1.W.grad
+                self.model.layer1.B.value -= self.learning_rate * self.model.layer1.B.grad
+                self.model.layer2.W.value -= self.learning_rate * self.model.layer2.W.grad
+                self.model.layer2.B.value -= self.learning_rate * self.model.layer2.B.grad
                 batch_losses.append(loss)
-
-            if np.not_equal(self.learning_rate_decay, 1.0):
-                # TODO: Implement learning rate decay
-                raise Exception("Not implemented!")
-
             ave_loss = np.mean(batch_losses)
 
-            train_accuracy = self.compute_accuracy(self.dataset.train_X,
-                                                   self.dataset.train_y)
+            #    for param_name, param in self.model.params().items():
+            #         optimizer = self.optimizers[param_name]
+            #         param.value = optimizer.update(
+            #             param.value, param.grad, self.learning_rate)
+
+            # if np.not_equal(self.learning_rate_decay, 1.0):
+            #     # TODO: Implement learning rate decay
+            #     raise Exception("Not implemented!")
+
+            train_accuracy = self.compute_accuracy(X, y)
 
             val_accuracy = self.compute_accuracy(self.dataset.val_X,
                                                  self.dataset.val_y)
 
             print("Loss: %f, Train accuracy: %f, val accuracy: %f" %
                   (batch_losses[-1], train_accuracy, val_accuracy))
+
+            test_pred = self.model.predict(X)
+            test_accuracy = multiclass_accuracy(test_pred, y)*100
+            print("test accuracy is ",test_accuracy)
 
             loss_history.append(ave_loss)
             train_acc_history.append(train_accuracy)
