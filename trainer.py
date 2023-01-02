@@ -90,6 +90,13 @@ class Trainer:
 
         X = self.dataset.train_X
         y = self.dataset.train_y
+        l_rate = self.learning_rate
+        
+        params = self.model.params()
+        W1 = params["W1"]
+        B1 = params["B1"]
+        W2 = params["W2"]
+        B2 = params["B2"]
 
         print("X shape is\n", X.shape)
         print("y shape is\n", y.shape)
@@ -113,11 +120,10 @@ class Trainer:
                 batch_y = y[batch_indices]
                 loss = self.model.compute_loss_and_gradients(
                     batch_X, batch_y)
-                params = self.model.params()
-                self.model.layer1.W.value -= self.learning_rate * self.model.layer1.W.grad
-                self.model.layer1.B.value -= self.learning_rate * self.model.layer1.B.grad
-                self.model.layer2.W.value -= self.learning_rate * self.model.layer2.W.grad
-                self.model.layer2.B.value -= self.learning_rate * self.model.layer2.B.grad
+                W1.value -= l_rate * W1.grad
+                B1.value -= l_rate * B1.grad
+                W2.value -= l_rate * W2.grad
+                B2.value -= l_rate * B2.grad
                 batch_losses.append(loss)
             ave_loss = np.mean(batch_losses)
 
@@ -138,9 +144,6 @@ class Trainer:
             print("Loss: %f, Train accuracy: %f, val accuracy: %f" %
                   (batch_losses[-1], train_accuracy, val_accuracy))
 
-            test_pred = self.model.predict(X)
-            test_accuracy = multiclass_accuracy(test_pred, y)*100
-            print("test accuracy is ",test_accuracy)
 
             loss_history.append(ave_loss)
             train_acc_history.append(train_accuracy)

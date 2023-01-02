@@ -98,9 +98,7 @@ def softmax_with_cross_entropy(predictions, target_index):
     return loss, grad
 
 
-
-
-def l2_regularization(W, B, reg_strength):
+def l2_regularization(params, reg_strength):
     '''
     Computes L2 regularization loss on weights and its gradient
 
@@ -112,16 +110,18 @@ def l2_regularization(W, B, reg_strength):
       loss, single value - l2 regularization loss
       gradient, np.array same shape as W - gradient of weight by l2 loss
     '''
-    W_2 = W*W
-    B_2 = B*B
-    loss = reg_strength * (np.sum(W_2) + np.sum(B_2))
-    dW = 2*reg_strength * W
-    dB = 2*reg_strength * B
+
+    loss_lst = [np.sum((param.value)**2) for param in params.values()]
+    loss = reg_strength * sum(loss_lst)
+
+    d_params = {key: 2 * reg_strength *
+                param.value for key, param in params.items()}
+
     # TODO: implement l2 regularization and gradient
     # Your final implementation shouldn't have any loops
     # raise Exception("Not implemented!")
 
-    return loss, dW, dB
+    return loss, d_params
 
 
 class Param:

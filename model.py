@@ -33,32 +33,36 @@ class TwoLayerNet:
         """
         # self.params()
         Relu = ReLULayer()
+        params = self.params()
 
-        self.layer1.W.grad = np.zeros_like(self.layer1.W.value)
-        self.layer1.B.grad = np.zeros_like(self.layer1.B.value)
+        # self.layer1.W.grad = np.zeros_like(self.layer1.W.value)
+        # self.layer1.B.grad = np.zeros_like(self.layer1.B.value)
 
-        self.layer2.W.grad = np.zeros_like(self.layer2.W.value)
-        self.layer2.B.grad = np.zeros_like(self.layer2.B.value)
+        # self.layer2.W.grad = np.zeros_like(self.layer2.W.value)
+        # self.layer2.B.grad = np.zeros_like(self.layer2.B.value)
+
+        params['W1'].grad.fill(0)
+        params['B1'].grad.fill(0)
+        params['W2'].grad.fill(0)
+        params['B2'].grad.fill(0)
 
         Z1 = self.layer1.forward(X)
         relu = Relu.forward(Z1)
         Z2 = self.layer2.forward(relu)
         loss, grad = softmax_with_cross_entropy(Z2, y)
+
         d_input2 = self.layer2.backward(grad)
         drelu = Relu.backward(d_input2)
         d_input1 = self.layer1.backward(drelu)
 
-        reg_loss1, reg_dW1, reg_dB1 = l2_regularization(
-            self.layer1.W.value, self.layer1.B.value, self.reg)
-        reg_loss2, reg_dW2, reg_dB2 = l2_regularization(
-            self.layer2.W.value, self.layer2.B.value, self.reg)
-        self.layer1.W.grad += reg_dW1
-        self.layer2.W.grad += reg_dW2
+        reg_loss, d_params = l2_regularization(params, self.reg)
+        params['W1'].grad += d_params['W1']
+        params['B1'].grad += d_params['B1']
 
-        self.layer1.B.grad += reg_dB1
-        self.layer2.B.grad += reg_dB2
+        params['W2'].grad += d_params['W2']
+        params['B2'].grad += d_params['B2']
 
-        loss += reg_loss1 + reg_loss2
+        loss +=  reg_loss
         return loss
 
         # Before running forward and backward pass through the model,
