@@ -90,13 +90,6 @@ class Trainer:
 
         X = self.dataset.train_X
         y = self.dataset.train_y
-        l_rate = self.learning_rate
-        
-        params = self.model.params()
-        W1 = params["W1"]
-        B1 = params["B1"]
-        W2 = params["W2"]
-        B2 = params["B2"]
 
         print("X shape is\n", X.shape)
         print("y shape is\n", y.shape)
@@ -120,30 +113,26 @@ class Trainer:
                 batch_y = y[batch_indices]
                 loss = self.model.compute_loss_and_gradients(
                     batch_X, batch_y)
-                W1.value -= l_rate * W1.grad
-                B1.value -= l_rate * B1.grad
-                W2.value -= l_rate * W2.grad
-                B2.value -= l_rate * B2.grad
+
+                for param_name, param in self.model.params().items():
+                    optimizer = self.optimizers[param_name]
+                    param.value = optimizer.update(
+                        param.value, param.grad, self.learning_rate)
                 batch_losses.append(loss)
             ave_loss = np.mean(batch_losses)
 
-            #    for param_name, param in self.model.params().items():
-            #         optimizer = self.optimizers[param_name]
-            #         param.value = optimizer.update(
-            #             param.value, param.grad, self.learning_rate)
 
-            # if np.not_equal(self.learning_rate_decay, 1.0):
-            #     # TODO: Implement learning rate decay
-            #     raise Exception("Not implemented!")
+            if np.not_equal(self.learning_rate_decay, 1.0):
+                self.learning_rate *= self.learning_rate_decay
+                # TODO: Implement learning rate decay
 
             train_accuracy = self.compute_accuracy(X, y)
 
             val_accuracy = self.compute_accuracy(self.dataset.val_X,
                                                  self.dataset.val_y)
 
-            print("Loss: %f, Train accuracy: %f, val accuracy: %f" %
-                  (batch_losses[-1], train_accuracy, val_accuracy))
-
+            print("Epoch: %i, Loss: %f, Train accuracy: %f, val accuracy: %f" %
+                  (epoch + 1, batch_losses[-1], train_accuracy, val_accuracy))
 
             loss_history.append(ave_loss)
             train_acc_history.append(train_accuracy)

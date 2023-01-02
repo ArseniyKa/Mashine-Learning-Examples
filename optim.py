@@ -41,6 +41,10 @@ class MomentumSGD:
         Returns:
         updated_weights, np array same shape as w
         """
+        velocity = np.zeros_like(w)
+        velocity = self.momentum * velocity - learning_rate * d_w
+        return w + velocity
+
         # TODO Implement momentum update
         # Hint: you'll need to introduce some variables to remember
         # velocity from the previous updates
