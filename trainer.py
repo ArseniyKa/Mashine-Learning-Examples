@@ -53,6 +53,7 @@ class Trainer:
 
     def setup_optimizers(self):
         params = self.model.params()
+        ## должно быть несколько оптимизиторов для каждого из параметров
         self.optimizers = {}
         for param_name, param in params.items():
             self.optimizers[param_name] = deepcopy(self.optim)
@@ -121,6 +122,9 @@ class Trainer:
                 batch_losses.append(loss)
             ave_loss = np.mean(batch_losses)
 
+            # for param_name, param in self.model.params().items():
+            #         optimizer = self.optimizers[param_name]
+            #         optimizer.reset()
 
             if np.not_equal(self.learning_rate_decay, 1.0):
                 self.learning_rate *= self.learning_rate_decay

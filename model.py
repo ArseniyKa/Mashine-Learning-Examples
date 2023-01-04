@@ -35,12 +35,6 @@ class TwoLayerNet:
         Relu = ReLULayer()
         params = self.params()
 
-        # self.layer1.W.grad = np.zeros_like(self.layer1.W.value)
-        # self.layer1.B.grad = np.zeros_like(self.layer1.B.value)
-
-        # self.layer2.W.grad = np.zeros_like(self.layer2.W.value)
-        # self.layer2.B.grad = np.zeros_like(self.layer2.B.value)
-
         params['W1'].grad.fill(0)
         params['B1'].grad.fill(0)
         params['W2'].grad.fill(0)
