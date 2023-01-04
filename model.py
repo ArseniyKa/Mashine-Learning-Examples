@@ -44,6 +44,7 @@ class TwoLayerNet:
         relu = Relu.forward(Z1)
         Z2 = self.layer2.forward(relu)
         loss, grad = softmax_with_cross_entropy(Z2, y)
+        grad/=X.shape[0]
 
         d_input2 = self.layer2.backward(grad)
         drelu = Relu.backward(d_input2)

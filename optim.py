@@ -30,7 +30,7 @@ class MomentumSGD:
     """
 
     def __init__(self, momentum=0.9):
-        self.momentum = 0.9
+        self.momentum = 0.999
         self.velocity = None
 
     def update(self, w, d_w, learning_rate):

@@ -55,7 +55,7 @@ def cross_entropy_loss(probs, target_index):
 
     loss_arr = - np.log(target_probability)
     # print("loss array \n", loss_arr)
-    loss = np.sum(loss_arr)
+    loss = np.average(loss_arr)
     # loss = np.sum(loss_arr)
 
     # print("loss is ", loss)
