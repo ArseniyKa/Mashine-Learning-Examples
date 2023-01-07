@@ -126,9 +126,9 @@ class Trainer:
             #         optimizer = self.optimizers[param_name]
             #         optimizer.reset()
 
-            if np.not_equal(self.learning_rate_decay, 1.0):
-                self.learning_rate *= self.learning_rate_decay
-                # TODO: Implement learning rate decay
+
+            self.learning_rate *= self.learning_rate_decay
+
 
             train_accuracy = self.compute_accuracy(X, y)
 
