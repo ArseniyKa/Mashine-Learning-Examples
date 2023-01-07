@@ -260,9 +260,10 @@ class ConvolutionalLayer:
         self.X = X
         size = self.filter_size
         W = self.W.value
+        B = self.B.value
         resh_W = W.reshape(self.filter_size**2 *
                            self.in_channels, self.out_channels)
-        print("resh W shape is ", resh_W.shape)
+        # print("resh W shape is ", resh_W.shape)
 
         result = np.zeros(
             (batch_size, out_height, out_width, self.out_channels))
@@ -274,15 +275,15 @@ class ConvolutionalLayer:
         # but try to avoid having any other loops
         # for batch in range(batch_size):
         for y in range(out_height):
-                for x in range(out_width):
-                    fragment_X = X[:, y:size + y,  x: size + x, :]
-                    resh_X = fragment_X.reshape(batch_size, -1)
-                    # print("resh X shape is ", resh_X.shape)
-                    result[:, y, x, :] = np.dot(
-                        resh_X, resh_W) + self.B.value
-                    # assert()
-                    # TODO: Implement forward pass for specific location
-                    # pass
+            for x in range(out_width):
+                fragment_X = X[:, y:size + y,  x: size + x, :]
+                resh_X = fragment_X.reshape(batch_size, -1)
+                # print("resh X shape is ", resh_X.shape)
+                result[:, y, x, :] = np.dot(
+                    resh_X, resh_W) + B
+                # assert()
+                # TODO: Implement forward pass for specific location
+                # pass
 
         # print("result shape is ", result.shape)
         # print("result\n", result)
@@ -295,21 +296,56 @@ class ConvolutionalLayer:
         # when you implemented FullyConnectedLayer
         # Just do it the same number of times and accumulate gradients
 
-        batch_size, height, width, channels = X.shape
+        batch_size, height, width, channels = self.X.shape
         _, out_height, out_width, out_channels = d_out.shape
+
+        d_W = self.W.grad.copy()
+        d_B = self.B.grad.copy()
+        X = self.X
+        size = self.filter_size
+
+        # self.W.grad = np.dot(self.X.T, d_out)
+        ones_arr = np.ones((batch_size, 1)).astype(float)
+        # # print("X is\n", self.X)
+        # # print("B grad is\n", self.B.grad)
+        # d_input = np.dot(d_out, self.W.value.T)
+
+        # print("d out shape ", d_out.shape)
 
         # TODO: Implement backward pass
         # Same as forward, setup variables of the right shape that
         # aggregate input gradient and fill them for every location
         # of the output
 
+        # d_input = np.zeros_like(X)
+        # print("d input shape ", d_input.shape)
+        resh_d_out = d_out.reshape(d_out.shape[0], -1)
+        # print("resh d out shape ", resh_d_out.shape)
         # Try to avoid having any other loops here too
         for y in range(out_height):
             for x in range(out_width):
+                fragment_X = X[:, y:size + y,  x: size + x, :]
+                resh_X = fragment_X.reshape(batch_size, -1)
+                # print("resh X shape ", resh_X.shape)
+                d_W = np.dot(resh_X.T, resh_d_out)
+                # print("d_W shape ", d_W.shape)
+                d_B = np.dot(ones_arr.T, resh_d_out)
+                # print("d_B shape ", d_B.shape)
+                assert d_B.size == self.out_channels
                 # TODO: Implement backward pass for specific location
                 # Aggregate gradients for both the input and
                 # the parameters (W and B)
-                pass
+
+        self.W.grad = d_W.reshape(self.W.value.shape)
+        self.B.grad = d_B.reshape(self.B.value.shape)
+
+        resh_W = self.W.value.reshape(self.filter_size**2 *
+                           self.in_channels, self.out_channels)
+        d_input = np.dot(resh_d_out, resh_W.T)
+        d_input = d_input.reshape(self.X.shape)
+        # print("d input shape ", d_input.shape)
+
+        return d_input
 
         raise Exception("Not implemented!")
 
