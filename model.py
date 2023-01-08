@@ -3,7 +3,8 @@ import numpy as np
 from layers import (
     FullyConnectedLayer, ReLULayer,
     ConvolutionalLayer, MaxPoolingLayer, Flattener,
-    softmax_with_cross_entropy, l2_regularization
+    softmax_with_cross_entropy, l2_regularization,
+    softmax
     )
 
 
@@ -24,8 +25,16 @@ class ConvNet:
         conv1_channels, int - number of filters in the 1st conv layer
         conv2_channels, int - number of filters in the 2nd conv layer
         """
+
+        self.conv1 = ConvolutionalLayer(input_shape[2], conv1_channels, filter_size=3, padding=1 )
+        self.max_pool1 = MaxPoolingLayer(4,4)
+        self.conv2 = ConvolutionalLayer(conv1_channels, conv2_channels, filter_size=3, padding=1 )
+        self.max_pool2 = MaxPoolingLayer(4,4)
+        self.flt = Flattener()
+        self.fc = FullyConnectedLayer(2*2, n_output_classes)
+
         # TODO Create necessary layers
-        raise Exception("Not implemented!")
+        # raise Exception("Not implemented!")
 
     def compute_loss_and_gradients(self, X, y):
         """
@@ -45,13 +54,34 @@ class ConvNet:
 
     def predict(self, X):
         # You can probably copy the code from previous assignment
-        raise Exception("Not implemented!")
+
+        Relu = ReLULayer()
+        flt = Flattener()
+
+        Z1 = self.conv1.forward(X)
+        relu1 = Relu.forward(Z1)
+        pool1 = self.max_pool1.forward(relu1)
+        
+        Z2 = self.conv2.forward(pool1)
+        relu2 = Relu.forward(Z2)
+        pool2 = self.max_pool2.forward(relu2)
+
+        flt_arr = self.flt.forward(pool2)
+        Z3 = self.fc.forward(flt_arr)
+
+        pred = softmax(Z3)
+        pred = np.argmax(pred, axis=1)
+        # print("prediction shape is \n", pred.shape)
+        assert pred.size == X.shape[0]
+        return pred
 
     def params(self):
-        result = {}
+        result = {'W1': self.layer1.W, 'B1': self.layer1.B,
+                  'W2': self.layer2.W, 'B2': self.layer2.B}
+        return result
 
         # TODO: Aggregate all the params from all the layers
         # which have parameters
-        raise Exception("Not implemented!")
+        # raise Exception("Not implemented!")
 
         return result
