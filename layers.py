@@ -254,17 +254,32 @@ class ConvolutionalLayer:
     def forward(self, X):
         batch_size, height, width, channels = X.shape
 
-        out_height = height - self.filter_size + 1
-        out_width = width - self.filter_size + 1
+        padding = self.padding
+        # if padding > 0:
 
-        self.X = X
+        if padding > 0:
+            out_height = height
+            out_width = width
+        else:
+            out_height = height - self.filter_size + 1
+            out_width = width - self.filter_size + 1
+
+        self.X = X.copy()
         size = self.filter_size
         W = self.W.value
         B = self.B.value
+
+        if padding > 0:
+            padded_img = np.zeros(
+                (batch_size, height + 2*padding, width + 2*padding, channels))
+            padded_img[:, padding: -padding, padding: -padding, :] = X.copy()
+            self.img = padded_img
+        else:
+            self.img = X.copy()
+
         resh_W = W.reshape(self.filter_size**2 *
                            self.in_channels, self.out_channels)
         # print("resh W shape is ", resh_W.shape)
-
         result = np.zeros(
             (batch_size, out_height, out_width, self.out_channels))
         # TODO: Implement forward pass
@@ -276,14 +291,11 @@ class ConvolutionalLayer:
         # for batch in range(batch_size):
         for y in range(out_height):
             for x in range(out_width):
-                fragment_X = X[:, y:size + y,  x: size + x, :]
+                fragment_X = self.img[:, y:size + y,  x: size + x, :]
                 resh_X = fragment_X.reshape(batch_size, -1)
                 # print("resh X shape is ", resh_X.shape)
-                result[:, y, x, :] = np.dot(
-                    resh_X, resh_W) + B
-                # assert()
+                result[:, y, x, :] = np.dot(resh_X, resh_W) + B
                 # TODO: Implement forward pass for specific location
-                # pass
 
         # print("result shape is ", result.shape)
         # print("result\n", result)
@@ -299,55 +311,68 @@ class ConvolutionalLayer:
         batch_size, height, width, channels = self.X.shape
         _, out_height, out_width, out_channels = d_out.shape
 
-        d_W = self.W.grad.copy()
-        d_B = self.B.grad.copy()
-        X = self.X
+        X = self.img
         size = self.filter_size
-
-        # self.W.grad = np.dot(self.X.T, d_out)
-        ones_arr = np.ones((batch_size, 1)).astype(float)
-        # # print("X is\n", self.X)
-        # # print("B grad is\n", self.B.grad)
-        # d_input = np.dot(d_out, self.W.value.T)
-
-        # print("d out shape ", d_out.shape)
+        print("X shape ", X.shape)
+        print("d out shape ", d_out.shape)
 
         # TODO: Implement backward pass
         # Same as forward, setup variables of the right shape that
         # aggregate input gradient and fill them for every location
         # of the output
 
-        # d_input = np.zeros_like(X)
+        d_W = np.zeros((size**2 * channels, out_channels))
+        d_input = np.zeros_like(X)
         # print("d input shape ", d_input.shape)
-        resh_d_out = d_out.reshape(d_out.shape[0], -1)
-        # print("resh d out shape ", resh_d_out.shape)
+        # d_input = d_input.reshape(batch_size, -1)
+        print("d input shape ", d_input.shape)
+
+        resh_d_out = d_out.reshape(batch_size, -1)
+        print("resh d out shape ", resh_d_out.shape)
+
+        self.W.grad = d_W.reshape(self.W.value.shape)
+        resh_W = self.W.value.reshape(self.filter_size**2 *
+                                      self.in_channels, self.out_channels)
+
+        # print(d_input.dtype)
         # Try to avoid having any other loops here too
         for y in range(out_height):
             for x in range(out_width):
                 fragment_X = X[:, y:size + y,  x: size + x, :]
+                print("fragment x shape ", fragment_X.shape)
                 resh_X = fragment_X.reshape(batch_size, -1)
-                # print("resh X shape ", resh_X.shape)
-                d_W = np.dot(resh_X.T, resh_d_out)
+                print("resh X shape ", resh_X.shape)
+                d_W += np.dot(resh_X.T, d_out[:, y, x, :])
                 # print("d_W shape ", d_W.shape)
-                d_B = np.dot(ones_arr.T, resh_d_out)
-                # print("d_B shape ", d_B.shape)
-                assert d_B.size == self.out_channels
+
+                print("resh_W.T shape ",resh_W.T.shape)
+                print("d_out[:, y, x, :] shape ", d_out[:, y, x, :].shape)
+                # resh_dout = np.reshape(batch_size * out_height * out_width, out_channels)
+                resh_d_input = np.dot( d_out[:, y, x, :], resh_W.T)
+                print("resh_d_input shape ", resh_d_input.shape)
+                resh_d_input = resh_d_input.reshape(fragment_X.shape)
+                print("resh_d_input shape ", resh_d_input.shape)
+
+                d_input[:, y:size + y,  x: size + x, :] += resh_d_input
+                # print("d input shape ", d_input.shape)
                 # TODO: Implement backward pass for specific location
                 # Aggregate gradients for both the input and
                 # the parameters (W and B)
 
-        self.W.grad = d_W.reshape(self.W.value.shape)
-        self.B.grad = d_B.reshape(self.B.value.shape)
+        # print("d_B shape ", d_B.shape)
+        self.B.grad = np.sum(d_out, axis=(0, 1, 2))
+        assert self.B.grad.shape == (out_channels,)
 
-        resh_W = self.W.value.reshape(self.filter_size**2 *
-                           self.in_channels, self.out_channels)
-        d_input = np.dot(resh_d_out, resh_W.T)
-        d_input = d_input.reshape(self.X.shape)
-        # print("d input shape ", d_input.shape)
+        padding = self.padding
+        if (padding>0):
+            #Remove padding for d_input
+            d_input = d_input[:, padding:-padding, padding:-padding, :]
+            print("d_input shape ", d_input.shape)
+        # d_input = d_input.reshape(self.X.shape)
 
         return d_input
 
-        raise Exception("Not implemented!")
+        # raise Exception("Not implemented!")
 
     def params(self):
         return {'W': self.W, 'B': self.B}
