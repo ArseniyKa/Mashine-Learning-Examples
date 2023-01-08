@@ -313,8 +313,8 @@ class ConvolutionalLayer:
 
         X = self.img
         size = self.filter_size
-        print("X shape ", X.shape)
-        print("d out shape ", d_out.shape)
+        # print("X shape ", X.shape)
+        # print("d out shape ", d_out.shape)
 
         # TODO: Implement backward pass
         # Same as forward, setup variables of the right shape that
@@ -325,10 +325,10 @@ class ConvolutionalLayer:
         d_input = np.zeros_like(X)
         # print("d input shape ", d_input.shape)
         # d_input = d_input.reshape(batch_size, -1)
-        print("d input shape ", d_input.shape)
+        # print("d input shape ", d_input.shape)
 
         resh_d_out = d_out.reshape(batch_size, -1)
-        print("resh d out shape ", resh_d_out.shape)
+        # print("resh d out shape ", resh_d_out.shape)
 
         self.W.grad = d_W.reshape(self.W.value.shape)
         resh_W = self.W.value.reshape(self.filter_size**2 *
@@ -339,19 +339,19 @@ class ConvolutionalLayer:
         for y in range(out_height):
             for x in range(out_width):
                 fragment_X = X[:, y:size + y,  x: size + x, :]
-                print("fragment x shape ", fragment_X.shape)
+                # print("fragment x shape ", fragment_X.shape)
                 resh_X = fragment_X.reshape(batch_size, -1)
-                print("resh X shape ", resh_X.shape)
+                # print("resh X shape ", resh_X.shape)
                 d_W += np.dot(resh_X.T, d_out[:, y, x, :])
                 # print("d_W shape ", d_W.shape)
 
-                print("resh_W.T shape ",resh_W.T.shape)
-                print("d_out[:, y, x, :] shape ", d_out[:, y, x, :].shape)
+                # print("resh_W.T shape ",resh_W.T.shape)
+                # print("d_out[:, y, x, :] shape ", d_out[:, y, x, :].shape)
                 # resh_dout = np.reshape(batch_size * out_height * out_width, out_channels)
-                resh_d_input = np.dot( d_out[:, y, x, :], resh_W.T)
-                print("resh_d_input shape ", resh_d_input.shape)
+                resh_d_input = np.dot(d_out[:, y, x, :], resh_W.T)
+                # print("resh_d_input shape ", resh_d_input.shape)
                 resh_d_input = resh_d_input.reshape(fragment_X.shape)
-                print("resh_d_input shape ", resh_d_input.shape)
+                # print("resh_d_input shape ", resh_d_input.shape)
 
                 d_input[:, y:size + y,  x: size + x, :] += resh_d_input
                 # print("d input shape ", d_input.shape)
@@ -364,10 +364,10 @@ class ConvolutionalLayer:
         assert self.B.grad.shape == (out_channels,)
 
         padding = self.padding
-        if (padding>0):
-            #Remove padding for d_input
+        if (padding > 0):
+            # Remove padding for d_input
             d_input = d_input[:, padding:-padding, padding:-padding, :]
-            print("d_input shape ", d_input.shape)
+            # print("d_input shape ", d_input.shape)
         # d_input = d_input.reshape(self.X.shape)
 
         return d_input
@@ -392,15 +392,52 @@ class MaxPoolingLayer:
 
     def forward(self, X):
         batch_size, height, width, channels = X.shape
+        self.X = X
+
+        size = self.pool_size
+        stride = self.stride
+        out_height = (height - size)/stride + 1
+        out_width = (width - size)/2 + 1
+        out_height = int(out_height)
+        out_width = int(out_width)
+        result = np.zeros((batch_size, out_height, out_width, channels))
+        # ind_lst = []
+
+        for y in range(out_height):
+            for x in range(out_width):
+                fragment_X = X[:, y:size + y:stride,  x: size + x:stride, :]
+                # print("fragment x shape ", fragment_X.shape)
+                result[:, y, x, :] = fragment_X.max(axis=(1, 2))
+                # print("fragm max \n ", fragment_X.max(axis=(1, 2)))
+                # ind_lst.append(fragment_X.argmax(axis=(1,2)))
+
+        # self.ind_lst = ind_lst
+        return result
         # TODO: Implement maxpool forward pass
         # Hint: Similarly to Conv layer, loop on
         # output x/y dimension
-        raise Exception("Not implemented!")
+        # raise Exception("Not implemented!")
 
     def backward(self, d_out):
         # TODO: Implement maxpool backward pass
         batch_size, height, width, channels = self.X.shape
-        raise Exception("Not implemented!")
+
+        X = self.X
+        size = self.pool_size
+        stride = self.stride
+        d_input = np.zeros_like(X)
+        _,  out_height, out_width, _ = d_out.shape
+
+        for y in range(out_height):
+            for x in range(out_width):
+                fragment_X = X[:, y:size + y:stride,  x: size + x:stride, :]
+                maximum = fragment_X.max()
+                ind = np.argwhere(fragment_X == maximum)[0]
+                d_input[:, ind[0], ind[1], :] = d_out[:, y, x, :]
+
+        return d_input
+
+        # raise Exception("Not implemented!")
 
     def params(self):
         return {}
