@@ -55,7 +55,7 @@ def cross_entropy_loss(probs, target_index):
 
     loss_arr = - np.log(target_probability)
     # print("loss array \n", loss_arr)
-    loss = np.average(loss_arr)
+    loss = np.sum(loss_arr)
     # loss = np.sum(loss_arr)
 
     # print("loss is ", loss)
@@ -330,7 +330,6 @@ class ConvolutionalLayer:
         resh_d_out = d_out.reshape(batch_size, -1)
         # print("resh d out shape ", resh_d_out.shape)
 
-        self.W.grad = d_W.reshape(self.W.value.shape)
         resh_W = self.W.value.reshape(self.filter_size**2 *
                                       self.in_channels, self.out_channels)
 
@@ -360,6 +359,8 @@ class ConvolutionalLayer:
                 # the parameters (W and B)
 
         # print("d_B shape ", d_B.shape)
+        self.W.grad = d_W.reshape(self.W.value.shape)
+        # print("self.W.grad\n ", self.W.grad)
         self.B.grad = np.sum(d_out, axis=(0, 1, 2))
         assert self.B.grad.shape == (out_channels,)
 
@@ -396,8 +397,8 @@ class MaxPoolingLayer:
 
         size = self.pool_size
         stride = self.stride
-        out_height = (height - size)/stride + 1
-        out_width = (width - size)/2 + 1
+        out_height = (height - size) / stride + 1
+        out_width = (width - size) / stride + 1
         out_height = int(out_height)
         out_width = int(out_width)
         result = np.zeros((batch_size, out_height, out_width, channels))
@@ -405,7 +406,9 @@ class MaxPoolingLayer:
 
         for y in range(out_height):
             for x in range(out_width):
-                fragment_X = X[:, y:size + y:stride,  x: size + x:stride, :]
+                s_y = stride * y
+                s_x = stride * x
+                fragment_X = X[:, s_y:size + s_y,  s_x:size + s_x, :]
                 # print("fragment x shape ", fragment_X.shape)
                 result[:, y, x, :] = fragment_X.max(axis=(1, 2))
                 # print("fragm max \n ", fragment_X.max(axis=(1, 2)))
@@ -427,13 +430,23 @@ class MaxPoolingLayer:
         d_input = np.zeros_like(X)
         _,  out_height, out_width, _ = d_out.shape
 
-        for y in range(out_height):
-            for x in range(out_width):
-                fragment_X = X[:, y:size + y:stride,  x: size + x:stride, :]
-                maximum = fragment_X.max()
-                ind = np.argwhere(fragment_X == maximum)[0]
-                d_input[:, ind[0], ind[1], :] = d_out[:, y, x, :]
+        for batch in range(batch_size):
+            for c in range(channels):
+                for y in range(out_height):
+                    for x in range(out_width):
+                        s_y = stride * y
+                        s_x = stride * x
+                        fragment_X = X[batch, s_y:size +
+                                       s_y,  s_x: size + s_x, c]
+                        # print("fragment x \n", fragment_X)
+                        maximum = fragment_X.max()
+                        ind = np.argwhere(fragment_X == maximum)[0]
+                        # print("ind is \n", ind)
+                        d_input[batch, s_y + ind[0], s_x+ind[1],
+                                c] = d_out[batch, y, x, c]
 
+        # print("d input[0] is \n", d_input[:,:,:,0])
+        assert d_input.shape == X.shape
         return d_input
 
     def params(self):
@@ -448,12 +461,10 @@ class Flattener:
         batch_size, height, width, channels = X.shape
         self.X_shape = X.shape
 
-
         # TODO: Implement forward pass
         # Layer should return array with dimensions
         # [batch_size, hight*width*channels]
         return X.reshape(batch_size, -1)
-
 
     def backward(self, d_out):
         # TODO: Implement backward pass
