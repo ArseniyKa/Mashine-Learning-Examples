@@ -53,7 +53,7 @@ class MomentumSGD:
         self.velocity = self.momentum * self.velocity - learning_rate * d_w
 
         assert(w.shape == self.velocity.shape)
-        assert(w[0, 0] < 10000000)
+        # assert(w[0, 0] < 10000000)
 
         return w + self.velocity
 

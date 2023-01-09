@@ -30,13 +30,13 @@ class ConvNet:
         self.conv1 = ConvolutionalLayer(
             input_shape[2], conv1_channels, filter_size=3, padding=1)
         self.relu1 = ReLULayer()
-        self.max_pool1 = MaxPoolingLayer(4, 4)
+        self.max_pool1 = MaxPoolingLayer(2, 2)
         self.conv2 = ConvolutionalLayer(
             conv1_channels, conv2_channels, filter_size=3, padding=1)
         self.relu2 = ReLULayer()
-        self.max_pool2 = MaxPoolingLayer(4, 4)
+        self.max_pool2 = MaxPoolingLayer(2, 2)
         self.flt = Flattener()
-        self.fc = FullyConnectedLayer(2*2*2, n_output_classes)
+        self.fc = FullyConnectedLayer(8*8*conv2_channels, n_output_classes)
 
         # TODO Create necessary layers
         # raise Exception("Not implemented!")
@@ -80,6 +80,7 @@ class ConvNet:
         Z3 = self.fc.forward(flt_arr)
         # print("Z3 shape ", Z3.shape)
         loss, grad = softmax_with_cross_entropy(Z3, y)
+        grad/=X.shape[0]
 
         d_input3 = self.fc.backward(grad)
         d_input3 = self.flt.backward(d_input3)
@@ -109,19 +110,26 @@ class ConvNet:
     def predict(self, X):
         # You can probably copy the code from previous assignment
 
-        Relu = ReLULayer()
-        flt = Flattener()
-
         Z1 = self.conv1.forward(X)
-        relu1 = Relu.forward(Z1)
-        pool1 = self.max_pool1.forward(relu1)
+        assert Z1.shape[1] == X.shape[1]
+        assert Z1.shape[2] == X.shape[2]
+        # print("Z1 shape ", Z1.shape)
+        A1 = self.relu1.forward(Z1)
+        pool1 = self.max_pool1.forward(A1)
+        # print("pool1 shape ", pool1.shape)
 
         Z2 = self.conv2.forward(pool1)
-        relu2 = Relu.forward(Z2)
-        pool2 = self.max_pool2.forward(relu2)
+        assert Z2.shape[1] == pool1.shape[1]
+        assert Z2.shape[2] == pool1.shape[2]
+        # print("Z2 shape ", Z2.shape)
+        A2 = self.relu2.forward(Z2)
+        pool2 = self.max_pool2.forward(A2)
+        # print("pool2 shape ", pool2.shape)
 
         flt_arr = self.flt.forward(pool2)
+        # print("flt arr shape ", flt_arr.shape)
         Z3 = self.fc.forward(flt_arr)
+        # print("Z3 shape ", Z3.shape)
 
         pred = softmax(Z3)
         pred = np.argmax(pred, axis=1)
