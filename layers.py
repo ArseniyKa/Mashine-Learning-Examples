@@ -200,16 +200,10 @@ class FullyConnectedLayer:
         d_result: np array (batch_size, n_input) - gradient
           with respect to input
         """
-        batch_size = d_out.shape[0]
-        # print("drelu is \n", drelu)
 
         self.W.grad = np.dot(self.X.T, d_out)
-        ones_arr = np.ones((batch_size, self.B.value.shape[0])).astype(float)
-        self.B.grad = np.dot(ones_arr.T, d_out)
-        # print("X is\n", self.X)
-        # print("B grad is\n", self.B.grad)
+        self.B.grad = np.sum(d_out, axis=0).reshape(1,-1)
         d_input = np.dot(d_out, self.W.value.T)
-        # print("dresult is \n", d_result)
         return d_input
 
         # TODO: Implement backward pass
@@ -220,7 +214,6 @@ class FullyConnectedLayer:
         # It should be pretty similar to linear classifier from
         # the previous assignment
 
-        raise Exception("Not implemented!")
 
     def params(self):
         return {'W': self.W, 'B': self.B}
