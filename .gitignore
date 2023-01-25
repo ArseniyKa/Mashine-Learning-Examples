@@ -1,0 +1,5 @@
+.vscode/
+build/
+CMakeLists.txt.user
+data/
+__pycache__/
